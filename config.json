@@ -1,0 +1,15 @@
+{
+    "active": "lmb_hr",
+    "lmb_av": {
+        "src": "3d models/lambo aventador/scene.gltf",
+        "scale": [ 0.125, 0.125, 0.125 ],
+        "pos": [ 0, -0.25, 0 ],
+        "rOffset": [0, 0, 0]
+    },
+    "lmb_hr": {
+        "src": "3d models/lambo hurcan/scene.gltf",
+        "scale": [ 0.15, 0.15, 0.15 ],
+        "pos": [ 0, -0.25, 0 ],
+        "rOffset": [0, 180, 0]
+    }
+}
