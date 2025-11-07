@@ -2,9 +2,8 @@
   "name": "3d-models",
   "private": true,
   "version": "0.0.0",
-  "type": "module",
   "scripts": {
-    "dev": "vite",
+    "start": "vite",
     "build": "vite build",
     "preview": "vite preview"
   },
@@ -12,6 +11,7 @@
     "vite": "^5.3.4"
   },
   "dependencies": {
+    "obj2gltf": "^3.1.6",
     "three": "^0.167.1"
   }
 }
