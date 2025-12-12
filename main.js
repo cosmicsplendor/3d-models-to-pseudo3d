@@ -22,11 +22,12 @@ const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
 renderer.setSize(width, height);
 document.body.appendChild(renderer.domElement);
 
-
+const clock = new THREE.Clock();
 
 const downloadModel = (key) => {
   const data = config[key]
   const rotOffset = config[key].rotOffset ?? [0, 0, 0]
+  
   return new Promise((resolve) => {
     loader.load(
       data.src,
@@ -36,10 +37,32 @@ const downloadModel = (key) => {
         object.position.set(...data.pos)
 
         scene.add(object);
-
         scene.background = null
-        const drx = Array.isArray(data.dr) ? data.dr[0] ?? 5: 5
-        const dry = Array.isArray(data.dr) ? data.dr[1] ?? 10: 10
+
+        // Setup animation mixer if animations exist
+        let mixer = null;
+        let animationAction = null;
+        const animations = gltf.animations;
+        
+        if (animations && animations.length > 0 && data.useAnimation) {
+          mixer = new THREE.AnimationMixer(object);
+          
+          // Select which animation to play (default to first, or specify by index/name)
+          const animIndex = data.animationIndex ?? 0;
+          const animation = typeof animIndex === 'string' 
+            ? animations.find(a => a.name === animIndex) 
+            : animations[animIndex];
+          
+          if (animation) {
+            animationAction = mixer.clipAction(animation);
+            animationAction.play();
+            console.log(`Playing animation: ${animation.name}, duration: ${animation.duration}s`);
+          }
+        }
+
+        // Generate rotation configurations
+        const drx = Array.isArray(data.dr) ? data.dr[0] ?? 5 : 5
+        const dry = Array.isArray(data.dr) ? data.dr[1] ?? 10 : 10
         const rotations = data.frames ?? [
           [-drx, 0, 0, "down"],
           [-drx, dry, 0, "down_left"],
@@ -50,30 +73,90 @@ const downloadModel = (key) => {
         ].map(r => {
           return [r[0] + rotOffset[0], r[1] + rotOffset[1], r[2] + rotOffset[2], r[3]]
         })
+
+        // Process each rotation angle
         for (const rotation of rotations) {
           const name = rotation[3]
           if (!data.up && name.startsWith("up")) continue
+          
           const r = rotation.slice(0, 3).map((r, i) => (r + data.rOffset[i]) * Math.PI / 180)
-          console.log(`downloading ${name}`)
           object.rotation.set(...r)
-          renderer.render(scene, camera);
-          if (config.download === false && config.preview) {
-            await wait(data.delay ?? 3)
-            continue
+
+          // If animation is enabled, capture multiple frames from the animation
+          if (mixer && animationAction) {
+            const animFrames = data.animFrames ?? 8; // Number of frames to capture
+            const animDuration = animationAction.getClip().duration;
+            const timeStep = animDuration / animFrames;
+            
+            // Option 1: Sample frames evenly across animation
+            if (data.animMode === 'sample' || !data.animMode) {
+              for (let i = 0; i < animFrames; i++) {
+                const time = i * timeStep;
+                mixer.setTime(time);
+                
+                console.log(`downloading ${name}_frame${i} at time ${time.toFixed(2)}s`)
+                renderer.render(scene, camera);
+                
+                if (config.download === false && config.preview) {
+                  await wait(data.delay ?? 0.5)
+                  continue
+                }
+                
+                downloadTrimmedImage(renderer.domElement, `${key}${name ? '_' + name : ''}_f${i}`)
+              }
+            }
+            // Option 2: Play animation in real-time and capture frames
+            else if (data.animMode === 'realtime') {
+              mixer.setTime(0);
+              clock.start();
+              let lastTime = 0;
+              
+              for (let i = 0; i < animFrames; i++) {
+                const targetTime = i * timeStep;
+                
+                // Update animation to target time
+                while (lastTime < targetTime) {
+                  const delta = Math.min(1/60, targetTime - lastTime);
+                  mixer.update(delta);
+                  lastTime += delta;
+                }
+                
+                console.log(`downloading ${name}_frame${i} at time ${targetTime.toFixed(2)}s`)
+                renderer.render(scene, camera);
+                
+                if (config.download === false && config.preview) {
+                  await wait(data.delay ?? 0.5)
+                  continue
+                }
+                
+                downloadTrimmedImage(renderer.domElement, `${key}${name ? '_' + name : ''}_f${i}`)
+              }
+            }
+          } else {
+            // Static model - single frame per rotation
+            console.log(`downloading ${name}`)
+            renderer.render(scene, camera);
+            
+            if (config.download === false && config.preview) {
+              await wait(data.delay ?? 3)
+              continue
+            }
+            
+            downloadTrimmedImage(renderer.domElement, key + (name ? '_' + name : ""))
           }
-          downloadTrimmedImage(renderer.domElement, key + (name ? name : ""))
         }
+        
         scene.remove(object)
         resolve()
       },
       undefined,
       (error) => {
-        // called when loading has errors
         console.error('An error happened', error);
       },
     )
   })
 }
+
 ;(async () => {
   if (config.preview) {
     await downloadModel(config.active)

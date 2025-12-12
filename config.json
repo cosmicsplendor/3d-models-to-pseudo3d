@@ -1,6 +1,6 @@
 {
-    "active": "panzer shell",
-    "download": true,
+    "active": "komodo dragon",
+    "download": false,
     "preview": true,
     "jetski": {
         "src": "3d models/jetski/scene.gltf",
@@ -25,7 +25,7 @@
             [0, 91, 0, "5"]
         ]
     },
-    "panzer shell": {
+    "panzerShell": {
         "src": "3d models/panzer_shell/scene.gltf",
         "scale": [ 1.25, 1.25, 1.25 ],
          "pos": [ -0, 0.1, -0.3 ],
@@ -37,5 +37,62 @@
             [0, 270, 0, "4"]
         ],
         "delay": 0.25
+    },
+    "artilleryShell": {
+        "src": "3d models/artillery shell/scene.gltf",
+        "scale": [ 0.5, 0.5, 0.5 ],
+         "pos": [ -0, 0.1, -0.3 ],
+        "rOffset": [98, 180, 0],
+        "frames": [
+            [0, 30, -60, "1"],
+            [0, 30, -60, "2"]
+        ],
+        "delay": 0.25
+    },
+    "meat": {
+        "src": "3d models/meat/scene.gltf",
+        "scale": [ 0.125, 0.125, 0.125 ],
+         "pos": [ -0, 0.5, -0.5 ],
+        "rOffset": [98, 180, 0],
+        "frames": [
+            [100, 60, 20, "1"],
+            [100, 120, 20, "2"],
+            [100, 180, 20, "3"],
+            [100, 240, 20, "4"],
+            [100, 300, 20, "5"],
+            [100, 360, 20, "6"]
+        ],
+        "delay": 0.25
+    },
+    "sshelmet": {
+        "src": "3d models/sshelmet/scene.gltf",
+        "scale": [ 0.05, 0.05, 0.05 ],
+         "pos": [ -0, 0.2, -0.5 ],
+        "rOffset": [98, 180, 0],
+        "frames": [
+            [360, 60, 0, "1"],
+            [30, 60, 0, "2"],
+            [60, 60, 0, "3"],
+            [90, 60, 0, "4"],
+            [120, 60, 0, "5"],
+            [150, 60, 0, "6"],
+            [180, 60, 0, "7"],
+            [210, 60, 0, "8"],
+            [240, 60, 0, "9"],
+            [270, 60, 0, "10"]
+
+        ],
+        "delay": 0.1
+    },
+    "komodo dragon": {
+        "src": "3d models/komodo dragon/scene.gltf",
+        "scale": [ 0.25, 0.25, 0.25 ],
+         "pos": [ -0, 0.2, -0.5 ],
+        "rOffset": [98, 180, 0],
+        "useAnimation": true,
+        "animationIndex": 0,
+        "animFrames": 60,
+         "animMode": "sample",
+        "delay": 0.2
     }
 }
