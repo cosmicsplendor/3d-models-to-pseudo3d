@@ -74,13 +74,36 @@ const downloadModel = (key) => {
           return [r[0] + rotOffset[0], r[1] + rotOffset[1], r[2] + rotOffset[2], r[3]]
         })
 
+        // Rotation order (default: 'XYZ')
+        const rotationOrder = data.rotationOrder ?? 'XYZ'
+
         // Process each rotation angle
         for (const rotation of rotations) {
-          const name = rotation[3]
-          if (!data.up && name.startsWith("up")) continue
+          let name
           
-          const r = rotation.slice(0, 3).map((r, i) => (r + data.rOffset[i]) * Math.PI / 180)
-          object.rotation.set(...r)
+          // Support multiple rotation modes
+          if (Array.isArray(rotation[0])) {
+            // Quaternion mode: [[x, y, z, w], "name"]
+            const [x, y, z, w] = rotation[0]
+            name = rotation[1]
+            object.quaternion.set(x, y, z, w)
+          } else if (rotation.length === 5) {
+            // Axis-angle mode: [axisX, axisY, axisZ, angle, "name"]
+            const axis = new THREE.Vector3(rotation[0], rotation[1], rotation[2]).normalize()
+            const angle = rotation[3] * Math.PI / 180
+            name = rotation[4]
+            object.quaternion.setFromAxisAngle(axis, angle)
+          } else {
+            // Euler angle mode: [x, y, z, "name"]
+            name = rotation[3]
+            const r = rotation.slice(0, 3).map((r, i) => (r + data.rOffset[i]) * Math.PI / 180)
+            
+            // Apply rotation with specified order
+            object.rotation.order = rotationOrder
+            object.rotation.set(...r)
+          }
+          
+          if (!data.up && name && name.startsWith("up")) continue
 
           // If animation is enabled, capture multiple frames from the animation
           if (mixer && animationAction) {
