@@ -55,31 +55,9 @@ const downloadModel = (key) => {
           
           if (animation) {
             animationAction = mixer.clipAction(animation);
-            
-            // Set looping behavior
-            if (data.loop !== undefined) {
-              animationAction.setLoop(
-                data.loop ? THREE.LoopRepeat : THREE.LoopOnce,
-                data.loop ? Infinity : 1
-              );
-            }
-            
             animationAction.play();
-            console.log(`Playing animation: ${animation.name}, duration: ${animation.duration}s, loop: ${data.loop ?? 'default'}`);
+            console.log(`Playing animation: ${animation.name}, duration: ${animation.duration}s`);
           }
-        }
-
-        // Preview mode with looping animation
-        if (config.preview && data.loop && mixer && animationAction) {
-          const animate = () => {
-            requestAnimationFrame(animate);
-            const delta = clock.getDelta();
-            mixer.update(delta);
-            renderer.render(scene, camera);
-          };
-          animate();
-          // Don't resolve - keep playing forever
-          return;
         }
 
         // Generate rotation configurations
@@ -122,46 +100,68 @@ const downloadModel = (key) => {
             
             // Option 1: Sample frames evenly across animation
             if (data.animMode === 'sample' || !data.animMode) {
-              for (let i = 0; i < animFrames; i++) {
-                const time = startTime + (i * timeStep);
-                mixer.setTime(time);
-                
-                console.log(`downloading ${name}_frame${i} at time ${time.toFixed(2)}s`)
-                renderer.render(scene, camera);
-                
-                if (config.download === false && config.preview) {
-                  await wait(data.delay ?? 0.5)
-                  continue
+              const captureFrames = async () => {
+                for (let i = 0; i < animFrames; i++) {
+                  const time = startTime + (i * timeStep);
+                  mixer.setTime(time);
+                  
+                  console.log(`downloading ${name}_frame${i} at time ${time.toFixed(2)}s`)
+                  renderer.render(scene, camera);
+                  
+                  if (config.download === false && config.preview) {
+                    await wait(data.delay ?? 0.5)
+                    continue
+                  }
+                  
+                  downloadTrimmedImage(renderer.domElement, `${key}${name ? '_' + name : ''}_f${i}`)
                 }
-                
-                downloadTrimmedImage(renderer.domElement, `${key}${name ? '_' + name : ''}_f${i}`)
+              }
+              
+              // Loop animation in preview mode if enabled
+              if (config.preview && data.loop) {
+                while (true) {
+                  await captureFrames()
+                }
+              } else {
+                await captureFrames()
               }
             }
             // Option 2: Play animation in real-time and capture frames
             else if (data.animMode === 'realtime') {
-              mixer.setTime(startTime);
-              clock.start();
-              let lastTime = startTime;
+              const captureFrames = async () => {
+                mixer.setTime(startTime);
+                clock.start();
+                let lastTime = startTime;
+                
+                for (let i = 0; i < animFrames; i++) {
+                  const targetTime = startTime + (i * timeStep);
+                  
+                  // Update animation to target time
+                  while (lastTime < targetTime) {
+                    const delta = Math.min(1/60, targetTime - lastTime);
+                    mixer.update(delta);
+                    lastTime += delta;
+                  }
+                  
+                  console.log(`downloading ${name}_frame${i} at time ${targetTime.toFixed(2)}s`)
+                  renderer.render(scene, camera);
+                  
+                  if (config.download === false && config.preview) {
+                    await wait(data.delay ?? 0.5)
+                    continue
+                  }
+                  
+                  downloadTrimmedImage(renderer.domElement, `${key}${name ? '_' + name : ''}_f${i}`)
+                }
+              }
               
-              for (let i = 0; i < animFrames; i++) {
-                const targetTime = startTime + (i * timeStep);
-                
-                // Update animation to target time
-                while (lastTime < targetTime) {
-                  const delta = Math.min(1/60, targetTime - lastTime);
-                  mixer.update(delta);
-                  lastTime += delta;
+              // Loop animation in preview mode if enabled
+              if (config.preview && data.loop) {
+                while (true) {
+                  await captureFrames()
                 }
-                
-                console.log(`downloading ${name}_frame${i} at time ${targetTime.toFixed(2)}s`)
-                renderer.render(scene, camera);
-                
-                if (config.download === false && config.preview) {
-                  await wait(data.delay ?? 0.5)
-                  continue
-                }
-                
-                downloadTrimmedImage(renderer.domElement, `${key}${name ? '_' + name : ''}_f${i}`)
+              } else {
+                await captureFrames()
               }
             }
           } else {
