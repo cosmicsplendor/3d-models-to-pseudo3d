@@ -11,14 +11,15 @@ camera.position.z = 1;
 
 const scene = new THREE.Scene();
 
-var ambientLight = new THREE.AmbientLight(0xffffff);
+// Default lights (will be replaced per model if specified)
+var ambientLight = new THREE.AmbientLight(0xffffff, 1);
 scene.add(ambientLight);
 
-var directionalLight = new THREE.DirectionalLight(0xffffff);
+var directionalLight = new THREE.DirectionalLight(0xffffff, 1);
 directionalLight.position.set(0, 1, 1).normalize();
 scene.add(directionalLight);
 
-const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
 renderer.setSize(width, height);
 document.body.appendChild(renderer.domElement);
 
@@ -35,6 +36,108 @@ const downloadModel = (key) => {
         const object = gltf.scene
         object.scale.set(...data.scale);
         object.position.set(...data.pos)
+
+        // Setup custom lighting for this model
+        const customLights = []
+        if (data.lighting) {
+          // Remove default lights
+          scene.remove(ambientLight)
+          scene.remove(directionalLight)
+          
+          const lighting = data.lighting
+          
+          // Ambient light
+          if (lighting.ambient !== false) {
+            const ambColor = lighting.ambientColor ?? 0xffffff
+            const ambIntensity = lighting.ambientIntensity ?? 0.5
+            const customAmbient = new THREE.AmbientLight(ambColor, ambIntensity)
+            scene.add(customAmbient)
+            customLights.push(customAmbient)
+          }
+          
+          // Directional light(s)
+          const dirLights = Array.isArray(lighting.directional) ? lighting.directional : [lighting.directional ?? {}]
+          dirLights.forEach(dirConfig => {
+            if (dirConfig === false) return
+            const dirColor = dirConfig.color ?? 0xffffff
+            const dirIntensity = dirConfig.intensity ?? 1
+            const dirPos = dirConfig.position ?? [0, 1, 1]
+            const customDir = new THREE.DirectionalLight(dirColor, dirIntensity)
+            customDir.position.set(...dirPos).normalize()
+            scene.add(customDir)
+            customLights.push(customDir)
+          })
+          
+          // Point lights
+          if (lighting.point) {
+            const pointLights = Array.isArray(lighting.point) ? lighting.point : [lighting.point]
+            pointLights.forEach(pointConfig => {
+              const pointColor = pointConfig.color ?? 0xffffff
+              const pointIntensity = pointConfig.intensity ?? 1
+              const pointPos = pointConfig.position ?? [0, 1, 0]
+              const pointDistance = pointConfig.distance ?? 0
+              const customPoint = new THREE.PointLight(pointColor, pointIntensity, pointDistance)
+              customPoint.position.set(...pointPos)
+              scene.add(customPoint)
+              customLights.push(customPoint)
+            })
+          }
+          
+          // Hemisphere light
+          if (lighting.hemisphere) {
+            const skyColor = lighting.hemisphere.skyColor ?? 0xffffff
+            const groundColor = lighting.hemisphere.groundColor ?? 0x444444
+            const hemiIntensity = lighting.hemisphere.intensity ?? 1
+            const customHemi = new THREE.HemisphereLight(skyColor, groundColor, hemiIntensity)
+            scene.add(customHemi)
+            customLights.push(customHemi)
+          }
+        } else {
+          // Re-add default lights if they were removed
+          if (!scene.children.includes(ambientLight)) scene.add(ambientLight)
+          if (!scene.children.includes(directionalLight)) scene.add(directionalLight)
+        }
+
+        // Apply post-processing filters to object materials
+        if (data.filters) {
+          object.traverse((child) => {
+            if (child.isMesh && child.material) {
+              const material = child.material
+              const filters = data.filters
+              
+              // Brightness (emissive intensity)
+              if (filters.brightness !== undefined) {
+                material.emissive = material.emissive || new THREE.Color(0x000000)
+                material.emissiveIntensity = filters.brightness
+              }
+              
+              // Saturation and contrast are handled via color adjustments
+              if (filters.saturation !== undefined) {
+                const sat = filters.saturation
+                if (material.color) {
+                  const hsl = {}
+                  material.color.getHSL(hsl)
+                  material.color.setHSL(hsl.h, hsl.s * sat, hsl.l)
+                }
+              }
+              
+              // Tint/color overlay
+              if (filters.tint) {
+                const tintColor = new THREE.Color(filters.tint)
+                const tintStrength = filters.tintStrength ?? 0.5
+                if (material.color) {
+                  material.color.lerp(tintColor, tintStrength)
+                }
+              }
+              
+              // Opacity
+              if (filters.opacity !== undefined) {
+                material.transparent = true
+                material.opacity = filters.opacity
+              }
+            }
+          })
+        }
 
         scene.add(object);
         scene.background = null
