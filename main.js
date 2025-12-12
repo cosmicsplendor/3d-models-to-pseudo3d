@@ -65,11 +65,11 @@ const downloadModel = (key) => {
         const dry = Array.isArray(data.dr) ? data.dr[1] ?? 10 : 10
         const rotations = data.frames ?? [
           [-drx, 0, 0, "down"],
-          [-drx, dry, 0, "down_left"],
+          [-drx, dry, 0, "downleft"],
           [0, 0, 0, ""],
           [0, dry, 0, "left"],
           [drx, 0, 0, "up"],
-          [drx, dry, 0, "up_left"],
+          [drx, dry, 0, "upleft"],
         ].map(r => {
           return [r[0] + rotOffset[0], r[1] + rotOffset[1], r[2] + rotOffset[2], r[3]]
         })
@@ -128,7 +128,7 @@ const downloadModel = (key) => {
                   const time = startTime + (i * timeStep);
                   mixer.setTime(time);
                   
-                  console.log(`downloading ${name}_frame${i} at time ${time.toFixed(2)}s`)
+                  console.log(`downloading ${name}frame${i} at time ${time.toFixed(2)}s`)
                   renderer.render(scene, camera);
                   
                   if (config.download === false && config.preview) {
@@ -136,7 +136,7 @@ const downloadModel = (key) => {
                     continue
                   }
                   
-                  downloadTrimmedImage(renderer.domElement, `${key}${name ? '_' + name : ''}_f${i}`)
+                  downloadTrimmedImage(renderer.domElement, `${key}${name ? '' + name : ''}f${i}`)
                 }
               }
               
@@ -166,7 +166,7 @@ const downloadModel = (key) => {
                     lastTime += delta;
                   }
                   
-                  console.log(`downloading ${name}_frame${i} at time ${targetTime.toFixed(2)}s`)
+                  console.log(`downloading ${name}frame${i} at time ${targetTime.toFixed(2)}s`)
                   renderer.render(scene, camera);
                   
                   if (config.download === false && config.preview) {
@@ -174,7 +174,7 @@ const downloadModel = (key) => {
                     continue
                   }
                   
-                  downloadTrimmedImage(renderer.domElement, `${key}${name ? '_' + name : ''}_f${i}`)
+                  downloadTrimmedImage(renderer.domElement, `${key}${name ? '' + name : ''}f${i}`)
                 }
               }
               
@@ -197,7 +197,7 @@ const downloadModel = (key) => {
               continue
             }
             
-            downloadTrimmedImage(renderer.domElement, key + (name ? '_' + name : ""))
+            downloadTrimmedImage(renderer.domElement, key + (name ? '' + name : ""))
           }
         }
         
