@@ -28,20 +28,37 @@ const clock = new THREE.Clock();
 const downloadModel = (key) => {
   const data = config[key]
   const rotOffset = config[key].rotOffset ?? [0, 0, 0]
-  
+
   // --- CHANGE START ---
   // Use a Set to track which files have been downloaded in this session.
   // This prevents re-downloading in a preview loop (while(true)).
   const downloadedFiles = new Set();
   // --- CHANGE END ---
-
-  return new Promise((resolve) => {
+  console.log("HERE")
+  console.log(data.src)
+  return new Promise((resolve, reject) => {
     loader.load(
       data.src,
       async (gltf) => {
-        const object = gltf.scene
+        // --- DEBUGGING START ---
+        console.log('GLTF file loaded successfully:', data.src);
+        console.log('Full loaded GLTF object:', gltf); // This will be a big object, but very useful
+
+        const object = gltf.scene;
+        console.log('The scene object:', object);
+
+        if (object.children.length === 0) {
+          console.error("ERROR: The loaded scene has no children! The model is empty.");
+          return; // Stop here if the model is empty
+        }
+        // --- DEBUGGING END ---
+
         object.scale.set(...data.scale);
-        object.position.set(...data.pos)
+        object.position.set(...data.pos);
+
+        // Log the properties AFTER you've set them
+        console.log('Position after setting:', object.position);
+        console.log('Scale after setting:', object.scale);
 
         scene.add(object);
         scene.background = null
@@ -50,17 +67,17 @@ const downloadModel = (key) => {
         let mixer = null;
         let animationAction = null;
         const animations = gltf.animations;
-        
-        
+
+
         if (animations && animations.length > 0 && data.useAnimation) {
           mixer = new THREE.AnimationMixer(object);
-          
+
           // Select which animation to play (default to first, or specify by index/name)
           const animIndex = data.animationIndex ?? 0;
-          const animation = typeof animIndex === 'string' 
-            ? animations.find(a => a.name === animIndex) 
+          const animation = typeof animIndex === 'string'
+            ? animations.find(a => a.name === animIndex)
             : animations[animIndex];
-          
+
           if (animation) {
             animationAction = mixer.clipAction(animation);
             animationAction.play();
@@ -69,18 +86,8 @@ const downloadModel = (key) => {
         }
 
         // Generate rotation configurations
-        const drx = Array.isArray(data.dr) ? data.dr[0] ?? 5 : 5
-        const dry = Array.isArray(data.dr) ? data.dr[1] ?? 10 : 10
         const rotations = data.frames ?? [
-          [-drx, 0, 0, "down"],
-          [-drx, dry, 0, "downleft"],
-          [0, 0, 0, ""],
-          [0, dry, 0, "left"],
-          [drx, 0, 0, "up"],
-          [drx, dry, 0, "upleft"],
-        ].map(r => {
-          return [r[0] + rotOffset[0], r[1] + rotOffset[1], r[2] + rotOffset[2], r[3]]
-        })
+        ]
 
         // Rotation order (default: 'XYZ')
         const rotationOrder = data.rotationOrder ?? 'XYZ'
@@ -88,7 +95,7 @@ const downloadModel = (key) => {
         // Process each rotation angle
         for (const rotation of rotations) {
           let name
-          
+
           // Support multiple rotation modes
           if (Array.isArray(rotation[0])) {
             // Quaternion mode: [[x, y, z, w], "name"]
@@ -105,48 +112,46 @@ const downloadModel = (key) => {
             // Euler angle mode: [x, y, z, "name"]
             name = rotation[3]
             const r = rotation.slice(0, 3).map((r, i) => (r + data.rOffset[i]) * Math.PI / 180)
-            
+
             // Apply rotation with specified order
             object.rotation.order = rotationOrder
             object.rotation.set(...r)
           }
-          
-          if (!data.up && name && name.startsWith("up")) continue
 
           // If animation is enabled, capture multiple frames from the animation
           if (mixer && animationAction) {
             const animFrames = data.animFrames ?? 8; // Number of frames to capture
             const animDuration = animationAction.getClip().duration;
-            
+
             // Support animation offset and range
             const animOffset = data.animOffset ?? 0; // Start time offset (in seconds or normalized 0-1)
             const animRange = data.animRange ?? 1; // Duration to capture (in seconds or normalized 0-1)
-            
+
             // Normalize values if they're between 0-1 (treat as percentage of total duration)
             const startTime = animOffset <= 1 ? animOffset * animDuration : animOffset;
             const duration = animRange <= 1 ? animRange * animDuration : animRange;
             const endTime = Math.min(startTime + duration, animDuration);
-            
+
             const timeStep = (endTime - startTime) / animFrames;
-            
+
             // Option 1: Sample frames evenly across animation
             if (data.animMode === 'sample' || !data.animMode) {
               const captureFrames = async () => {
                 for (let i = 0; i < animFrames; i++) {
                   const time = startTime + (i * timeStep);
                   mixer.setTime(time);
-                  
+
                   renderer.render(scene, camera);
 
                   // --- CHANGE START ---
-                  const filename = `${key}${name ? '' + name : ''}f${i}`;
+                  const filename = `${key}${name ? '' + name : ''}${i}`;
 
                   // Only download if enabled AND this file hasn't been downloaded yet.
                   if (config.download !== false && !downloadedFiles.has(filename)) {
                     downloadTrimmedImage(renderer.domElement, filename);
                     downloadedFiles.add(filename); // Mark as downloaded
                   }
-                  
+
                   // In preview mode, always wait for the delay to see the frame.
                   if (config.preview) {
                     await wait(data.delay ?? 0.5);
@@ -154,7 +159,7 @@ const downloadModel = (key) => {
                   // --- CHANGE END ---
                 }
               }
-              
+
               // Loop animation in preview mode if enabled
               if (config.preview && data.loop) {
                 while (true) {
@@ -170,19 +175,19 @@ const downloadModel = (key) => {
                 mixer.setTime(startTime);
                 clock.start();
                 let lastTime = startTime;
-                
+
                 for (let i = 0; i < animFrames; i++) {
                   const targetTime = startTime + (i * timeStep);
-                  
+
                   // Update animation to target time
                   while (lastTime < targetTime) {
-                    const delta = Math.min(1/60, targetTime - lastTime);
+                    const delta = Math.min(1 / 60, targetTime - lastTime);
                     mixer.update(delta);
                     lastTime += delta;
                   }
-                  
+
                   renderer.render(scene, camera);
-                  
+
                   // --- CHANGE START ---
                   const filename = `${key}${name ? '' + name : ''}f${i}`;
 
@@ -191,7 +196,7 @@ const downloadModel = (key) => {
                     downloadTrimmedImage(renderer.domElement, filename);
                     downloadedFiles.add(filename); // Mark as downloaded
                   }
-                  
+
                   // In preview mode, always wait for the delay to see the frame.
                   if (config.preview) {
                     await wait(data.delay ?? 0.5);
@@ -199,7 +204,7 @@ const downloadModel = (key) => {
                   // --- CHANGE END ---
                 }
               }
-              
+
               // Loop animation in preview mode if enabled
               if (config.preview && data.loop) {
                 while (true) {
@@ -212,16 +217,16 @@ const downloadModel = (key) => {
           } else {
             // Static model - single frame per rotation
             renderer.render(scene, camera);
-            
+
             // --- CHANGE START ---
             const filename = key + (name ? '' + name : "");
-            
+
             // Only download if enabled AND this file hasn't been downloaded yet.
             if (config.download !== false && !downloadedFiles.has(filename)) {
               downloadTrimmedImage(renderer.domElement, filename);
               downloadedFiles.add(filename); // Mark as downloaded
             }
-            
+
             // In preview mode, always wait for the delay to see the frame.
             if (config.preview) {
               await wait(data.delay ?? 3);
@@ -231,41 +236,41 @@ const downloadModel = (key) => {
           }
         }
         if (config.rotationEditor) {
-            const gui = new GUI();
-            const folder = gui.addFolder('Rotation');
-            
-            // Create a temporary object to hold degrees for the GUI
-            const rotationGUI = {
-                x: 0,
-                y: 0,
-                z: 0
-            };
+          const gui = new GUI();
+          const folder = gui.addFolder('Rotation');
 
-            const updateRotation = () => {
-                object.rotation.set(
-                    rotationGUI.x * Math.PI / 180,
-                    rotationGUI.y * Math.PI / 180,
-                    rotationGUI.z * Math.PI / 180
-                );
-                renderer.render(scene, camera);
-            };
+          // Create a temporary object to hold degrees for the GUI
+          const rotationGUI = {
+            x: 0,
+            y: 0,
+            z: 0
+          };
 
-            folder.add(rotationGUI, 'x', -180, 180).onChange(updateRotation);
-            folder.add(rotationGUI, 'y', -180, 180).onChange(updateRotation);
-            folder.add(rotationGUI, 'z', -180, 180).onChange(updateRotation);
+          const updateRotation = () => {
+            object.rotation.set(
+              rotationGUI.x * Math.PI / 180,
+              rotationGUI.y * Math.PI / 180,
+              rotationGUI.z * Math.PI / 180
+            );
+            renderer.render(scene, camera);
+          };
 
-            // Also add a button to log the current values to the console
-            const actions = {
-                logValues: () => {
-                    console.log(`[${rotationGUI.x}, ${rotationGUI.y}, ${rotationGUI.z}]`);
-                }
-            };
-            gui.add(actions, 'logValues').name('Log to Console');
-            
-            updateRotation(); // initial call
-            
-            // Prevent the rest of your download loop from running in GUI mode
-            return; 
+          folder.add(rotationGUI, 'x', -180, 180).onChange(updateRotation);
+          folder.add(rotationGUI, 'y', -180, 180).onChange(updateRotation);
+          folder.add(rotationGUI, 'z', -180, 180).onChange(updateRotation);
+
+          // Also add a button to log the current values to the console
+          const actions = {
+            logValues: () => {
+              console.log(`[${rotationGUI.x}, ${rotationGUI.y}, ${rotationGUI.z}]`);
+            }
+          };
+          gui.add(actions, 'logValues').name('Log to Console');
+
+          updateRotation(); // initial call
+
+          // Prevent the rest of your download loop from running in GUI mode
+          return;
         }
         scene.remove(object)
         resolve()
@@ -273,19 +278,20 @@ const downloadModel = (key) => {
       undefined,
       (error) => {
         console.error('An error happened', error);
+        reject(error); 
       },
     )
   })
 }
 
-;(async () => {
-  if (config.preview) {
-    await downloadModel(config.active)
-    return
-  }
-  for (const key in config) {
-    const data = config[key]
-    if (!data.src) continue
-    await downloadModel(key)
-  }
-})();
+  ; (async () => {
+    if (config.preview) {
+      await downloadModel(config.active)
+      return
+    }
+    for (const key in config) {
+      const data = config[key]
+      if (!data.src) continue
+      await downloadModel(key)
+    }
+  })();

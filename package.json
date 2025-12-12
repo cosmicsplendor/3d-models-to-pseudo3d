@@ -5,12 +5,15 @@
   "scripts": {
     "start": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "fixpbr": "gltf-transform optimize \"./public/3d_models/police/scene.gltf\" \"./public/3d_models/police/scene-fixed.gltf\""
   },
   "devDependencies": {
     "vite": "^5.3.4"
   },
   "dependencies": {
+    "@gltf-transform/cli": "^4.2.1",
+    "lil-gui": "^0.21.0",
     "obj2gltf": "^3.1.6",
     "three": "^0.167.1"
   }
