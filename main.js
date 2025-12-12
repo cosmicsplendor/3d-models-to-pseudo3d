@@ -28,6 +28,12 @@ const downloadModel = (key) => {
   const data = config[key]
   const rotOffset = config[key].rotOffset ?? [0, 0, 0]
   
+  // --- CHANGE START ---
+  // Use a Set to track which files have been downloaded in this session.
+  // This prevents re-downloading in a preview loop (while(true)).
+  const downloadedFiles = new Set();
+  // --- CHANGE END ---
+
   return new Promise((resolve) => {
     loader.load(
       data.src,
@@ -130,13 +136,21 @@ const downloadModel = (key) => {
                   
                   console.log(`downloading ${name}frame${i} at time ${time.toFixed(2)}s`)
                   renderer.render(scene, camera);
-                  
-                  if (config.download === false && config.preview) {
-                    await wait(data.delay ?? 0.5)
-                    continue
+
+                  // --- CHANGE START ---
+                  const filename = `${key}${name ? '' + name : ''}f${i}`;
+
+                  // Only download if enabled AND this file hasn't been downloaded yet.
+                  if (config.download !== false && !downloadedFiles.has(filename)) {
+                    downloadTrimmedImage(renderer.domElement, filename);
+                    downloadedFiles.add(filename); // Mark as downloaded
                   }
                   
-                  downloadTrimmedImage(renderer.domElement, `${key}${name ? '' + name : ''}f${i}`)
+                  // In preview mode, always wait for the delay to see the frame.
+                  if (config.preview) {
+                    await wait(data.delay ?? 0.5);
+                  }
+                  // --- CHANGE END ---
                 }
               }
               
@@ -169,12 +183,20 @@ const downloadModel = (key) => {
                   console.log(`downloading ${name}frame${i} at time ${targetTime.toFixed(2)}s`)
                   renderer.render(scene, camera);
                   
-                  if (config.download === false && config.preview) {
-                    await wait(data.delay ?? 0.5)
-                    continue
+                  // --- CHANGE START ---
+                  const filename = `${key}${name ? '' + name : ''}f${i}`;
+
+                  // Only download if enabled AND this file hasn't been downloaded yet.
+                  if (config.download !== false && !downloadedFiles.has(filename)) {
+                    downloadTrimmedImage(renderer.domElement, filename);
+                    downloadedFiles.add(filename); // Mark as downloaded
                   }
                   
-                  downloadTrimmedImage(renderer.domElement, `${key}${name ? '' + name : ''}f${i}`)
+                  // In preview mode, always wait for the delay to see the frame.
+                  if (config.preview) {
+                    await wait(data.delay ?? 0.5);
+                  }
+                  // --- CHANGE END ---
                 }
               }
               
@@ -192,12 +214,21 @@ const downloadModel = (key) => {
             console.log(`downloading ${name}`)
             renderer.render(scene, camera);
             
-            if (config.download === false && config.preview) {
-              await wait(data.delay ?? 3)
-              continue
+            // --- CHANGE START ---
+            const filename = key + (name ? '' + name : "");
+            
+            // Only download if enabled AND this file hasn't been downloaded yet.
+            if (config.download !== false && !downloadedFiles.has(filename)) {
+              downloadTrimmedImage(renderer.domElement, filename);
+              downloadedFiles.add(filename); // Mark as downloaded
             }
             
-            downloadTrimmedImage(renderer.domElement, key + (name ? '' + name : ""))
+            // In preview mode, always wait for the delay to see the frame.
+            if (config.preview) {
+              await wait(data.delay ?? 3);
+              continue; // continue is needed here as it's not in a separate captureFrames function
+            }
+            // --- CHANGE END ---
           }
         }
         
