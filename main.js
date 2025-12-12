@@ -86,12 +86,22 @@ const downloadModel = (key) => {
           if (mixer && animationAction) {
             const animFrames = data.animFrames ?? 8; // Number of frames to capture
             const animDuration = animationAction.getClip().duration;
-            const timeStep = animDuration / animFrames;
+            
+            // Support animation offset and range
+            const animOffset = data.animOffset ?? 0; // Start time offset (in seconds or normalized 0-1)
+            const animRange = data.animRange ?? 1; // Duration to capture (in seconds or normalized 0-1)
+            
+            // Normalize values if they're between 0-1 (treat as percentage of total duration)
+            const startTime = animOffset <= 1 ? animOffset * animDuration : animOffset;
+            const duration = animRange <= 1 ? animRange * animDuration : animRange;
+            const endTime = Math.min(startTime + duration, animDuration);
+            
+            const timeStep = (endTime - startTime) / animFrames;
             
             // Option 1: Sample frames evenly across animation
             if (data.animMode === 'sample' || !data.animMode) {
               for (let i = 0; i < animFrames; i++) {
-                const time = i * timeStep;
+                const time = startTime + (i * timeStep);
                 mixer.setTime(time);
                 
                 console.log(`downloading ${name}_frame${i} at time ${time.toFixed(2)}s`)
@@ -107,12 +117,12 @@ const downloadModel = (key) => {
             }
             // Option 2: Play animation in real-time and capture frames
             else if (data.animMode === 'realtime') {
-              mixer.setTime(0);
+              mixer.setTime(startTime);
               clock.start();
-              let lastTime = 0;
+              let lastTime = startTime;
               
               for (let i = 0; i < animFrames; i++) {
-                const targetTime = i * timeStep;
+                const targetTime = startTime + (i * timeStep);
                 
                 // Update animation to target time
                 while (lastTime < targetTime) {
