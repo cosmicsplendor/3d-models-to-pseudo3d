@@ -69,6 +69,44 @@ const downloadModel = (key) => {
         const animations = gltf.animations;
 
 
+        if (config[config.active]?.rotationEditor) {
+          const gui = new GUI();
+          const folder = gui.addFolder('Rotation');
+
+          // Create a temporary object to hold degrees for the GUI
+          const rotationGUI = {
+            x: 0,
+            y: 0,
+            z: 0
+          };
+
+          const updateRotation = () => {
+            object.rotation.set(
+              rotationGUI.x * Math.PI / 180,
+              rotationGUI.y * Math.PI / 180,
+              rotationGUI.z * Math.PI / 180
+            );
+            renderer.render(scene, camera);
+          };
+
+          folder.add(rotationGUI, 'x', -180, 180).onChange(updateRotation);
+          folder.add(rotationGUI, 'y', -180, 180).onChange(updateRotation);
+          folder.add(rotationGUI, 'z', -180, 180).onChange(updateRotation);
+
+          // Also add a button to log the current values to the console
+          const actions = {
+            logValues: () => {
+              console.log(`[${rotationGUI.x}, ${rotationGUI.y}, ${rotationGUI.z}]`);
+            }
+          };
+          gui.add(actions, 'logValues').name('Log to Console');
+
+          updateRotation(); // initial call
+
+          // Prevent the rest of your download loop from running in GUI mode
+          return;
+        }
+
         if (animations && animations.length > 0 && data.useAnimation) {
           mixer = new THREE.AnimationMixer(object);
 
@@ -235,50 +273,14 @@ const downloadModel = (key) => {
             // --- CHANGE END ---
           }
         }
-        if (config.rotationEditor) {
-          const gui = new GUI();
-          const folder = gui.addFolder('Rotation');
 
-          // Create a temporary object to hold degrees for the GUI
-          const rotationGUI = {
-            x: 0,
-            y: 0,
-            z: 0
-          };
-
-          const updateRotation = () => {
-            object.rotation.set(
-              rotationGUI.x * Math.PI / 180,
-              rotationGUI.y * Math.PI / 180,
-              rotationGUI.z * Math.PI / 180
-            );
-            renderer.render(scene, camera);
-          };
-
-          folder.add(rotationGUI, 'x', -180, 180).onChange(updateRotation);
-          folder.add(rotationGUI, 'y', -180, 180).onChange(updateRotation);
-          folder.add(rotationGUI, 'z', -180, 180).onChange(updateRotation);
-
-          // Also add a button to log the current values to the console
-          const actions = {
-            logValues: () => {
-              console.log(`[${rotationGUI.x}, ${rotationGUI.y}, ${rotationGUI.z}]`);
-            }
-          };
-          gui.add(actions, 'logValues').name('Log to Console');
-
-          updateRotation(); // initial call
-
-          // Prevent the rest of your download loop from running in GUI mode
-          return;
-        }
         scene.remove(object)
         resolve()
       },
       undefined,
       (error) => {
         console.error('An error happened', error);
-        reject(error); 
+        reject(error);
       },
     )
   })
