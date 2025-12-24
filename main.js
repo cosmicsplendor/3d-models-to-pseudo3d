@@ -85,7 +85,7 @@ const downloadModel = (key) => {
 
         if (config[config.active]?.rotationEditor) {
           const gui = new GUI();
-          const folder = gui.addFolder('Rotation');
+          const rotationFolder = gui.addFolder('Rotation');
 
           const rotationGUI = {
             x: 0,
@@ -102,16 +102,46 @@ const downloadModel = (key) => {
             renderer.render(scene, camera);
           };
 
-          folder.add(rotationGUI, 'x', -180, 180).onChange(updateRotation);
-          folder.add(rotationGUI, 'y', -180, 180).onChange(updateRotation);
-          folder.add(rotationGUI, 'z', -180, 180).onChange(updateRotation);
+          rotationFolder.add(rotationGUI, 'x', -180, 180).onChange(updateRotation);
+          rotationFolder.add(rotationGUI, 'y', -180, 180).onChange(updateRotation);
+          rotationFolder.add(rotationGUI, 'z', -180, 180).onChange(updateRotation);
+
+          // NEW: Add pivot offset controls
+          const pivotFolder = gui.addFolder('Pivot Offset');
+
+          const pivotGUI = {
+            x: data.pivotOffset ? data.pivotOffset[0] : 0,
+            y: data.pivotOffset ? data.pivotOffset[1] : 0,
+            z: data.pivotOffset ? data.pivotOffset[2] : 0
+          };
+
+          const updatePivot = () => {
+            if (data.pivotOffset) {
+              // Update the object's position within the wrapper
+              object.position.set(pivotGUI.x, pivotGUI.y, pivotGUI.z);
+            }
+            renderer.render(scene, camera);
+          };
+
+          pivotFolder.add(pivotGUI, 'x', -2, 2, 0.01).onChange(updatePivot);
+          pivotFolder.add(pivotGUI, 'y', -2, 2, 0.01).onChange(updatePivot);
+          pivotFolder.add(pivotGUI, 'z', -2, 2, 0.01).onChange(updatePivot);
 
           const actions = {
-            logValues: () => {
-              console.log(`[${rotationGUI.x}, ${rotationGUI.y}, ${rotationGUI.z}]`);
+            logRotation: () => {
+              console.log(`Rotation: [${rotationGUI.x}, ${rotationGUI.y}, ${rotationGUI.z}]`);
+            },
+            logPivot: () => {
+              console.log(`Pivot Offset: [${pivotGUI.x}, ${pivotGUI.y}, ${pivotGUI.z}]`);
+            },
+            logBoth: () => {
+              console.log(`Rotation: [${rotationGUI.x}, ${rotationGUI.y}, ${rotationGUI.z}]`);
+              console.log(`Pivot Offset: [${pivotGUI.x}, ${pivotGUI.y}, ${pivotGUI.z}]`);
             }
           };
-          gui.add(actions, 'logValues').name('Log to Console');
+          gui.add(actions, 'logRotation').name('Log Rotation');
+          gui.add(actions, 'logPivot').name('Log Pivot');
+          gui.add(actions, 'logBoth').name('Log Both');
 
           updateRotation();
           return;
