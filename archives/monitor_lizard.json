@@ -1,0 +1,155 @@
+{
+    "lizardattack": {
+        "src": "3d_models/komodo dragon/scene.gltf",
+        "scale": [0.6,0.6,0.6],
+        "pos": [-0,0.2,-0.5],
+        "rOffset": [0,0,0],
+        "frames": [
+            [38.52, 78.12, -1.44, "side"],
+            [16.2, 153.36, 2.88, "rearside"],
+            [20.88, -19.08, -1.44, "frontside"],
+            [73.8, 180, 2.88, "over"]
+        ],
+        "rotationEditor": false,
+        "useAnimation": true,
+        "animationIndex": 0,
+        "animFrames": 4,
+        "loop": false,
+        "animMode": "sample",
+        "delay": 0.2,
+        "animOffset": 0.55,
+        "animRange": 0.125
+    },
+    "lizardjump": {
+        "src": "3d_models/komodo dragon/scene.gltf",
+        "scale": [0.6,0.6,0.6],
+        "pos": [-0,0.2,-0.5],
+        "rOffset": [0,0,0],
+        "frames": [
+            [19.52, 2.88, 2.88, "front"],
+            [38.52, 78.12, -1.44, "side"],
+            [16.2, 153.36, 2.88, "rearside"],
+            [20.88, -19.08, -1.44, "frontside"]
+        ],
+        "rotationEditor": false,
+        "useAnimation": true,
+        "animationIndex": 0,
+        "animFrames": 5,
+        "loop": false,
+        "animMode": "sample",
+        "delay": 0.2,
+        "animOffset": 0.75,
+        "animRange": 0.125
+    },
+    "lizardmaul": {
+        "src": "3d_models/komodo dragon/scene.gltf",
+        "scale": [0.4,0.4,0.4],
+        "pos": [-0,0.2,-0.5],
+        "rOffset": [0,0,0],
+        "frames": [
+            [29.52, 2.88, 2.88, "front"],
+            [38.52, 78.12, -1.44, "side"],
+            [16.2, 153.36, 2.88, "rearside"],
+            [20.88, -19.08, -1.44, "frontside"]
+        ],
+        "rotationEditor": false,
+        "useAnimation": true,
+        "animationIndex": 0,
+        "animFrames": 12,
+        "loop": false,
+        "animMode": "sample",
+        "delay": 0.1,
+        "animOffset": 0.85,
+        "animRange": 0.125
+    },
+    "cockroachwalk": {
+        "src": "3d_models/cockroach.glb",
+        "scale": [0.2,0.2,0.2],
+        "pos": [-0,0.2,-0.5],
+        "rOffset": [0,0,0],
+        "frames": [
+            [25.2, -36.72, -1.44, "rearside"]
+        ],
+        "rotationEditor": false,
+        "useAnimation": true,
+        "animationIndex": 5,
+        "animFrames": 4,
+        "loop": true,
+        "animMode": "sample",
+        "delay": 0.1,
+        "animOffset": 0,
+        "animRange": 1
+    },
+    "cockroachmove": {
+        "src": "3d_models/cockroach.glb",
+        "scale": [0.2,0.2,0.2],
+        "pos": [-0,0.2,-0.5],
+        "rOffset": [0,0,0],
+        "frames": [
+            [25.2, -1.44, -1.44, "rear"]
+        ],
+        "rotationEditor": false,
+        "useAnimation": true,
+        "animationIndex": 0,
+        "animFrames": 4,
+        "loop": true,
+        "animMode": "sample",
+        "delay": 0.1,
+        "animOffset": 0,
+        "animRange": 1
+    },
+    "cockroachmoveover": {
+        "src": "3d_models/cockroach.glb",
+        "scale": [0.2,0.2,0.2],
+        "pos": [-0,0.2,-0.5],
+        "rOffset": [0,0,0],
+        "frames": [
+            [56.16, -1.44, -1.44, "rearover"]
+        ],
+        "rotationEditor": false,
+        "useAnimation": true,
+        "animationIndex": 4,
+        "animFrames": 4,
+        "loop": true,
+        "animMode": "sample",
+        "delay": 0.1,
+        "animOffset": 0,
+        "animRange": 1
+    },
+    "roachattack": {
+        "src": "3d_models/cockroach.glb",
+        "scale": [0.2,0.2,0.2],
+        "pos": [-0,0.2,-0.5],
+        "rOffset": [0,0,0],
+        "frames": [
+            [56.16, -1.44, -1.44, "rear"]
+        ],
+        "rotationEditor": false,
+        "useAnimation": true,
+        "animationIndex": 1,
+        "animFrames": 4,
+        "loop": true,
+        "animMode": "sample",
+        "delay": 0.1,
+        "animOffset": 0,
+        "animRange": 1
+    },
+    "cockroachfly": {
+        "src": "3d_models/cockroach.glb",
+        "scale": [0.2,0.2,0.2],
+        "pos": [-0,0.2,-0.5],
+        "rOffset": [0,0,0],
+        "frames": [
+            [56.16, -1.44, -1.44, "rearover"]
+        ],
+        "rotationEditor": false,
+        "useAnimation": true,
+        "animationIndex": 3,
+        "animFrames": 4,
+        "loop": true,
+        "animMode": "sample",
+        "delay": 0.1,
+        "animOffset": 0,
+        "animRange": 1
+    }
+}
