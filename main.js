@@ -1,10 +1,12 @@
 import * as THREE from 'three'
 import config from "./config.json"
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
+import { FBXLoader } from 'three/addons/loaders/FBXLoader.js'
 import { downloadTrimmedImage, wait } from './utils'
 import GUI from 'lil-gui';
 
-const loader = new GLTFLoader()
+const gltfLoader = new GLTFLoader()
+const fbxLoader = new FBXLoader()
 const width = window.innerWidth
 const height = window.innerHeight
 const camera = new THREE.PerspectiveCamera(70, width / height, 0.01, 10);
@@ -24,6 +26,11 @@ renderer.setSize(width, height);
 document.body.appendChild(renderer.domElement);
 
 const clock = new THREE.Clock();
+
+const getFileExtension = (url) => {
+  return url.split('.').pop().toLowerCase().split('?')[0];
+};
+
 const downloadModel = (key) => {
   const data = config[key]
   const rotOffset = config[key].rotOffset ?? [0, 0, 0]
@@ -32,14 +39,22 @@ const downloadModel = (key) => {
   console.log("HERE")
   console.log(data.src)
 
+  const extension = getFileExtension(data.src);
+  const loader = extension === 'fbx' ? fbxLoader : gltfLoader;
+
+  console.log(`Using ${extension.toUpperCase()} loader for ${data.src}`);
+
   return new Promise((resolve, reject) => {
     loader.load(
       data.src,
-      async (gltf) => {
-        console.log('GLTF file loaded successfully:', data.src);
-        console.log('Full loaded GLTF object:', gltf);
+      async (loadedData) => {
+        console.log('Model file loaded successfully:', data.src);
+        console.log('Full loaded object:', loadedData);
 
-        const object = gltf.scene;
+        // Handle different loader outputs
+        const object = extension === 'fbx' ? loadedData : loadedData.scene;
+        const animations = extension === 'fbx' ? loadedData.animations : loadedData.animations;
+        
         console.log('The scene object:', object);
 
         if (object.children.length === 0) {
@@ -81,7 +96,6 @@ const downloadModel = (key) => {
         // Setup animation mixer if animations exist
         let mixer = null;
         let animationAction = null;
-        const animations = gltf.animations;
 
         if (config[config.active]?.rotationEditor) {
           const gui = new GUI();
@@ -164,6 +178,11 @@ const downloadModel = (key) => {
 
         const rotations = data.frames ?? [];
         const rotationOrder = data.rotationOrder ?? 'XYZ';
+
+        // Wait for next frame to ensure model is fully rendered
+        await new Promise(resolve => requestAnimationFrame(resolve));
+        renderer.render(scene, camera);
+        await new Promise(resolve => requestAnimationFrame(resolve));
 
         // Process each rotation angle
         for (const rotation of rotations) {
