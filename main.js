@@ -1,3 +1,4 @@
+import { snapshot, flushFrames } from './frameBuffer'
 import * as THREE from 'three'
 import config from "./config.json"
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
@@ -35,7 +36,7 @@ const downloadModel = (key) => {
   const data = config[key]
   const rotOffset = config[key].rotOffset ?? [0, 0, 0]
   const downloadedFiles = new Set();
-
+  const frames = []
   console.log("HERE")
   console.log(data.src)
 
@@ -45,6 +46,12 @@ const downloadModel = (key) => {
   console.log(`Using ${extension.toUpperCase()} loader for ${data.src}`);
 
   return new Promise((resolve, reject) => {
+    console.log({
+    src: data.src,
+    resolved: new URL(data.src, document.baseURI).href,
+    baseURI: document.baseURI,
+    location: window.location.href
+  })
     loader.load(
       data.src,
       async (loadedData) => {
@@ -232,10 +239,10 @@ const downloadModel = (key) => {
 
                   renderer.render(scene, camera);
 
-                  const filename = `${key}${name ? '' + name : ''}${i}`;
+                  const filename = `${key}${name ? '' + name : ''}${String(i).padStart(2, '0')}`;
 
                   if (config.download !== false && !downloadedFiles.has(filename)) {
-                    downloadTrimmedImage(renderer.domElement, filename);
+                    frames.push({ filename, canvas: snapshot(renderer.domElement) })
                     downloadedFiles.add(filename);
                   }
 
@@ -269,10 +276,10 @@ const downloadModel = (key) => {
 
                   renderer.render(scene, camera);
 
-                  const filename = `${key}${name ? '' + name : ''}f${i}`;
+                  const filename = `${key}${name ? '' + name : ''}f${String(i).padStart(2, '0')}`;
 
                   if (config.download !== false && !downloadedFiles.has(filename)) {
-                    downloadTrimmedImage(renderer.domElement, filename);
+                    frames.push({ filename, canvas: snapshot(renderer.domElement) })
                     downloadedFiles.add(filename);
                   }
 
@@ -297,7 +304,7 @@ const downloadModel = (key) => {
             const filename = key + (name ? '' + name : "");
 
             if (config.download !== false && !downloadedFiles.has(filename)) {
-              downloadTrimmedImage(renderer.domElement, filename);
+              frames.push({ filename, canvas: snapshot(renderer.domElement) })
               downloadedFiles.add(filename);
             }
 
@@ -308,6 +315,7 @@ const downloadModel = (key) => {
           }
         }
 
+        await flushFrames(frames, { pad: 2, centerX: false })
         scene.remove(rotationTarget);
         resolve();
       },

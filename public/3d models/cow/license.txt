@@ -1,0 +1,11 @@
+Model Information:
+* title:	fantasy cow animation
+* source:	https://sketchfab.com/3d-models/fantasy-cow-animation-10f51e5c1bd9477e906526c8aec5b91e
+* author:	hino (https://sketchfab.com/Slava251114)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "fantasy cow animation" (https://sketchfab.com/3d-models/fantasy-cow-animation-10f51e5c1bd9477e906526c8aec5b91e) by hino (https://sketchfab.com/Slava251114) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
