@@ -239,7 +239,7 @@ const downloadModel = (key) => {
 
                   renderer.render(scene, camera);
 
-                  const filename = `${key}${name ? '' + name : ''}${String(i).padStart(2, '0')}`;
+                  const filename = `${key}${name ? '' + name : ''}${i + 1}`;
 
                   if (config.download !== false && !downloadedFiles.has(filename)) {
                     frames.push({ filename, canvas: snapshot(renderer.domElement) })
@@ -276,7 +276,7 @@ const downloadModel = (key) => {
 
                   renderer.render(scene, camera);
 
-                  const filename = `${key}${name ? '' + name : ''}f${String(i).padStart(2, '0')}`;
+                  const filename = `${key}${name ? '' + name : ''}f${i + 1}`;
 
                   if (config.download !== false && !downloadedFiles.has(filename)) {
                     frames.push({ filename, canvas: snapshot(renderer.domElement) })

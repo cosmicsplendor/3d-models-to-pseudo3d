@@ -8,11 +8,11 @@
         "pos": [-0,0,-0.2],
         "rOffset": [0,0,0],
         "frames": [
-            [0.52, 78.12, -1.44, "dead"]
+            [0.52, 78.12, -1.44, "side"]
         ],
         "rotationEditor": false,
         "useAnimation": true,
-        "animationIndex": 4,
+        "animationIndex": 0,
         "animFrames": 12,
         "loop": false,
         "animMode": "sample",
